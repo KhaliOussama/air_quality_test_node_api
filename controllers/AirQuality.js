@@ -1,23 +1,39 @@
 const request = require('request');
+const AirQuality = require('../models/AirQuality')
 
-const getCurrentCityAirQuality = (req, res) => {
-    const { lat, lon} = req.params
-    let options = {
-        url: `http://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=159f6143-d91b-4b4d-8f4b-f356db6bba61`,
+require('dotenv').config()
+
+const getCityAirQuality = (longitude, latitude) =>  {
+    return options = {
+        url: `http://api.airvisual.com/v2/nearest_city?lat=${latitude}&lon=${longitude}&key=${process.env.AIR_QUALITY_API_KEY}`,
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'Accept-Charset': 'utf-8'
         }
     };
+  }
+const getCurrentCityAirQuality = (req, res, next) => {
+    const { lat, lon } = req.params
+    const options = getCityAirQuality(lon, lat)
     request(options, (error, response, body)=>{
         let json = JSON.parse(body);
-        console.log(json); 
         const { pollution } = json.data.current
         res.status(200).json({result: {pollution} })
     });
 }
 
+const storeParisAirQuality = async (req, res) => {
+    const options = getCityAirQuality(2.352222, 48.856613)
+    await request(options, (error, response, body)=>{
+        let json = JSON.parse(body);
+        const { pollution } = json.data.current
+        const airQuality = AirQuality.create({ pollution });
+        return
+    });
+}
+
 module.exports = {
-    getCurrentCityAirQuality
+    getCurrentCityAirQuality,
+    storeParisAirQuality
 }
